@@ -11,6 +11,8 @@ const CONSUL_ID = `foods-${HOST}-${PORT}-${uuid.v4()}`;
 
 const app = express();
 
+let animals_service_instances = []; // Array con las URL de las instancias del servicio de animales
+
 const foods = [
     {
         id: 1,
@@ -42,7 +44,6 @@ app.get('/', (req, res) => {
             '/foods',
             '/foods/:id',
             '/foods/:id/animals',
-            '/foods/animals/:id',
         ]
     });
 });
@@ -60,6 +61,39 @@ app.get('/foods/:id', (req, res) => {
         return;
     }
     res.send({food});
+});
+
+
+const fetchDataAnimals = async () => {
+    return new Promise((res, rej) => {
+        const url = animals_service_instances[Math.floor(Math.random()*animals_service_instances.length)];
+        console.log('Pidiendo datos de animales a ', url);
+        request(url, {json:true}, (err, response, data) => {
+            if(err){
+                rej(err);
+            };
+            res(data);
+        })
+    })
+}
+
+app.get('/foods/:id/animals', async (req, res) => {
+    try{
+        console.log(`GET /foods/${req.params.id} `, Date.now());
+        let food = foods.find(food => food.id == req.params.id);
+        food = Object.assign({}, food); // se realiza copia para no perder la referencia de los animales
+        if(!food){
+            res.status(404).send({message: "Alimento no encontrado"});
+            return;
+        }
+        
+        const animals = await fetchDataAnimals();
+        food.animals = animals.filter(animal => food.animals.includes(animal.id));
+
+        res.send({food});
+    }catch(err){
+        res.status(500).send({error: true, message: err});
+    }
 });
 
 app.listen(PORT, () => {
@@ -103,4 +137,27 @@ app.listen(PORT, () => {
     });
 
     console.log('Servidor corriendo en http://' + HOST + ':' + PORT);
-})
+});
+
+// Watcher de instancias de servicio de animales
+
+const watcher = consul.watch({
+    method: consul.health.service,
+    options: {
+        service: 'animals-service',
+        passing: true
+    }
+});
+
+watcher.on('change', instances => {
+    console.log('Recibiendo actualizacion de Consul sobre la cantidad de instancia de servicio de animales: ', instances.length);
+    animals_service_instances = [];
+
+    instances.forEach(instance => {
+        animals_service_instances.push(`http://${instance.Service.Address}:${instance.Service.Port}/animals`);
+    });
+});
+
+watcher.on('error', err => {
+    console.log('Watcher error: ', err);
+});
