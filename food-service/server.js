@@ -30,7 +30,7 @@ const foods = [
         animals: [2, 5, 6]
     },
     {
-        id: 3,
+        id: 4,
         name: "alimento balanceado",
         animals: [5]
     },
@@ -53,17 +53,6 @@ app.get('/foods', (req, res) => {
     res.send(foods);
 });
 
-app.get('/foods/:id', (req, res) => {
-    console.log(`GET /foods/${req.params.id} `, Date.now());
-    const food = foods.find(food => food.id == req.params.id);
-    if(!food){
-        res.status(404).send({message: "Alimento no encontrado"});
-        return;
-    }
-    res.send({food});
-});
-
-
 const fetchDataAnimals = async () => {
     return new Promise((res, rej) => {
         const url = animals_service_instances[Math.floor(Math.random()*animals_service_instances.length)];
@@ -77,7 +66,7 @@ const fetchDataAnimals = async () => {
     })
 }
 
-app.get('/foods/:id/animals', async (req, res) => {
+app.get('/foods/:id', async (req, res) => {
     try{
         console.log(`GET /foods/${req.params.id} `, Date.now());
         let food = foods.find(food => food.id == req.params.id);
