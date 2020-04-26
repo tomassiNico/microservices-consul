@@ -41,9 +41,14 @@ app.get('/', (req, res) => {
     res.send({
         message: 'Bienvenido al servicio de comidas y animales que las consumen.',
         endpoints: [
-            '/foods',
-            '/foods/:id',
-            '/foods/:id/animals',
+            {
+                endpoint: '/foods',
+                description: 'Obtener lista de alimentos y animales que los consumen'
+            },
+            {
+                endpoint: '/foods/:id',
+                description: 'Obtener el detalle de un alimento y descripcion de los animales que lo consumen'
+            }
         ]
     });
 });
