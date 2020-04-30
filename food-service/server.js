@@ -1,11 +1,11 @@
 const express = require('express');
-const consul = require('consul')();
+const consul = require('consul')({host: 'consulserver'});
 const uuid = require('uuid');
 const request = require('request');
 const os = require('os');
 
 const PID = process.pid;
-const PORT = Math.floor(process.argv[2]);
+const PORT = Math.floor(process.argv[2]) || 5000;
 const HOST = os.hostname();
 const CONSUL_ID = `foods-${HOST}-${PORT}-${uuid.v4()}`;
 
